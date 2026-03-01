@@ -1,0 +1,62 @@
+cmake_minimum_required(VERSION 4.2.3)
+
+ADD_DEFINITIONS(-D _UNICODE)
+ADD_DEFINITIONS(-D UNICODE)
+
+ADD_DEFINITIONS(-D _CMAKE_BUILD)
+
+#ADD_DEFINITIONS(-D EASYCOM_EXPORTS)
+
+# find_library(minhook_lib libminhook.x86 ./3rd_party/lib/x86 NO_DEFAULT_PATH)
+
+SET(TOOLS_SRC_FILES 
+"dllmain.c"
+"../libop/com/op_i.c"
+"easycom.cpp")
+
+
+add_library(tools SHARED ${TOOLS_SRC_FILES})
+
+# MinHook 优先使用 vcpkg static triplet 的静态库
+set(OP_TOOLS_MINHOOK_LINKED FALSE)
+if (DEFINED ENV{VCPKG_ROOT})
+  if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(OP_TOOLS_MINHOOK_STATIC_TRIPLET "x64-windows-static")
+    set(OP_TOOLS_MINHOOK_LIB_RELEASE_NAME "minhook.x64.lib")
+    set(OP_TOOLS_MINHOOK_LIB_DEBUG_NAME "minhook.x64d.lib")
+  else()
+    set(OP_TOOLS_MINHOOK_STATIC_TRIPLET "x86-windows-static")
+    set(OP_TOOLS_MINHOOK_LIB_RELEASE_NAME "minhook.x32.lib")
+    set(OP_TOOLS_MINHOOK_LIB_DEBUG_NAME "minhook.x32d.lib")
+  endif()
+
+  file(TO_CMAKE_PATH "$ENV{VCPKG_ROOT}" OP_VCPKG_ROOT)
+  set(OP_TOOLS_MINHOOK_LIB_RELEASE "${OP_VCPKG_ROOT}/installed/${OP_TOOLS_MINHOOK_STATIC_TRIPLET}/lib/${OP_TOOLS_MINHOOK_LIB_RELEASE_NAME}")
+  set(OP_TOOLS_MINHOOK_LIB_DEBUG "${OP_VCPKG_ROOT}/installed/${OP_TOOLS_MINHOOK_STATIC_TRIPLET}/debug/lib/${OP_TOOLS_MINHOOK_LIB_DEBUG_NAME}")
+
+  if (EXISTS "${OP_TOOLS_MINHOOK_LIB_RELEASE}")
+    if (EXISTS "${OP_TOOLS_MINHOOK_LIB_DEBUG}")
+      TARGET_LINK_LIBRARIES(tools optimized "${OP_TOOLS_MINHOOK_LIB_RELEASE}" debug "${OP_TOOLS_MINHOOK_LIB_DEBUG}")
+    else()
+      TARGET_LINK_LIBRARIES(tools "${OP_TOOLS_MINHOOK_LIB_RELEASE}")
+    endif()
+    set(OP_TOOLS_MINHOOK_LINKED TRUE)
+  endif()
+endif()
+
+if (NOT OP_TOOLS_MINHOOK_LINKED)
+  if (TARGET minhook::minhook)
+    TARGET_LINK_LIBRARIES(tools minhook::minhook)
+  else()
+    TARGET_LINK_LIBRARIES(tools minhook)
+  endif()
+endif()
+
+
+IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    install(TARGETS tools RUNTIME DESTINATION "${PROJECT_SOURCE_DIR}/bin/x64")
+    install(TARGETS tools ARCHIVE DESTINATION "${PROJECT_SOURCE_DIR}/lib/x64")
+ELSE()
+    install(TARGETS tools RUNTIME DESTINATION "${PROJECT_SOURCE_DIR}/bin/x86")
+    install(TARGETS tools ARCHIVE DESTINATION "${PROJECT_SOURCE_DIR}/lib/x86")
+ENDIF()

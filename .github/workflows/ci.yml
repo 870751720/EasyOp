@@ -1,0 +1,199 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+    tags: [ 'v*' ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+  pull_request:
+    branches: [ master, main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+      - 'LICENSE'
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [ Win32, x64 ]
+
+    env:
+      # BlackBone 源码根目录（稍后会检出到该路径）
+      BLACKBONE_ROOT: ${{ github.workspace }}\BlackBone
+
+    steps:
+      - name: Checkout op
+        uses: actions/checkout@v4
+
+      - name: Install vcpkg
+        shell: pwsh
+        run: |
+          $vcpkgRoot = "$env:USERPROFILE\vcpkg"
+          if (-not (Test-Path $vcpkgRoot)) {
+            git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          }
+          & "$vcpkgRoot\bootstrap-vcpkg.bat"
+          Add-Content -Path $Env:GITHUB_ENV -Value "VCPKG_ROOT=$vcpkgRoot"
+
+      - name: Install dependencies via vcpkg (gtest, minhook)
+        shell: pwsh
+        run: |
+          $triplet = if ('${{ matrix.arch }}' -eq 'Win32') { 'x86-windows' } else { 'x64-windows' }
+          $overlayDir = Join-Path $env:GITHUB_WORKSPACE "ci\triplets"
+          & "$env:VCPKG_ROOT\vcpkg.exe" install gtest:$triplet minhook:$triplet --overlay-triplets=$overlayDir
+
+      - name: Checkout BlackBone
+        uses: actions/checkout@v4
+        with:
+          repository: DarthTon/Blackbone
+          path: BlackBone
+
+      - name: Configure BlackBone (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $src = "$env:BLACKBONE_ROOT\src"
+          $bld = "$env:BLACKBONE_ROOT\build\${{ matrix.arch }}"
+          cmake -S $src -B $bld -G "Visual Studio 17 2022" -A ${{ matrix.arch }} `
+            -DCMAKE_POLICY_DEFAULT_CMP0091=NEW `
+            -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+
+      - name: Build BlackBone (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $bld = "$env:BLACKBONE_ROOT\build\${{ matrix.arch }}"
+          cmake --build $bld --config Release
+
+      - name: Resolve BlackBone paths (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $root = $env:BLACKBONE_ROOT
+          $arch = '${{ matrix.arch }}'
+          $searchDir = Join-Path $root "build\$arch"
+          $lib = Get-ChildItem -Path $searchDir -Filter BlackBone.lib -Recurse -ErrorAction Stop | Select-Object -First 1
+          if (-not $lib) {
+            Write-Error "BlackBone.lib not found under $searchDir"
+          }
+
+          $includeDir = Join-Path $root "src"
+          Add-Content -Path $Env:GITHUB_ENV -Value "BLACKBONE_INCLUDE_DIR=$includeDir"
+          Add-Content -Path $Env:GITHUB_ENV -Value "BLACKBONE_LIBRARY=$($lib.FullName)"
+
+      - name: Configure op (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          # 让顶层 CMake 自动接入 vcpkg toolchain（CMakeLists.txt 会读取 VCPKG_ROOT 环境变量）
+          $bld = "build\${{ matrix.arch }}"
+          New-Item -ItemType Directory -Path $bld -Force | Out-Null
+          $overlayDir = Join-Path $env:GITHUB_WORKSPACE "ci\triplets"
+          cmake -S . -B $bld -G "Visual Studio 17 2022" -A ${{ matrix.arch }} `
+            -Dbuild_swig_py=OFF `
+            -DBLACKBONE_INCLUDE_DIR="$env:BLACKBONE_INCLUDE_DIR" `
+            -DBLACKBONE_LIBRARY="$env:BLACKBONE_LIBRARY" `
+            -DVCPKG_OVERLAY_TRIPLETS="$overlayDir"
+
+      - name: Build op (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $bld = "build\${{ matrix.arch }}"
+          cmake --build $bld --config Release
+
+      - name: Run ctest (${{ matrix.arch }})
+        shell: pwsh
+        run: |
+          $bld = "build\${{ matrix.arch }}"
+          cd $bld
+          ctest -C Release --output-on-failure
+
+  release:
+    runs-on: windows-latest
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/')
+
+    env:
+      BLACKBONE_ROOT: ${{ github.workspace }}\BlackBone
+
+    steps:
+      - name: Checkout op
+        uses: actions/checkout@v4
+
+      - name: Install vcpkg
+        shell: pwsh
+        run: |
+          $vcpkgRoot = "$env:USERPROFILE\vcpkg"
+          if (-not (Test-Path $vcpkgRoot)) {
+            git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          }
+          & "$vcpkgRoot\bootstrap-vcpkg.bat"
+          Add-Content -Path $Env:GITHUB_ENV -Value "VCPKG_ROOT=$vcpkgRoot"
+
+      - name: Checkout BlackBone
+        uses: actions/checkout@v4
+        with:
+          repository: DarthTon/Blackbone
+          path: BlackBone
+
+      - name: Build op for Win32 and x64 and install
+        shell: pwsh
+        run: |
+          $root = $env:BLACKBONE_ROOT
+
+          foreach ($arch in @('Win32', 'x64')) {
+            Write-Host "=== Build configuration for $arch ==="
+
+            # 安装依赖
+            $triplet = if ($arch -eq 'Win32') { 'x86-windows' } else { 'x64-windows' }
+            $overlayDir = Join-Path $env:GITHUB_WORKSPACE "ci\triplets"
+            & "$env:VCPKG_ROOT\vcpkg.exe" install gtest:$triplet minhook:$triplet --overlay-triplets=$overlayDir
+
+            # 构建 BlackBone
+            $src = Join-Path $root "src"
+            $bld = Join-Path $root "build\$arch"
+            cmake -S $src -B $bld -G "Visual Studio 17 2022" -A $arch `
+              -DCMAKE_POLICY_DEFAULT_CMP0091=NEW `
+              -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded
+            cmake --build $bld --config Release
+
+            # 解析 BlackBone 实际输出路径
+            $searchDir = $bld
+            $lib = Get-ChildItem -Path $searchDir -Filter BlackBone.lib -Recurse -ErrorAction Stop | Select-Object -First 1
+            if (-not $lib) {
+              Write-Error "BlackBone.lib not found under $searchDir"
+            }
+            $includeDir = Join-Path $root "src"
+
+            # 配置并编译 + 安装 op
+            $opBuildDir = "build\$arch"
+            New-Item -ItemType Directory -Path $opBuildDir -Force | Out-Null
+            cmake -S . -B $opBuildDir -G "Visual Studio 17 2022" -A $arch `
+              -Dbuild_swig_py=OFF `
+              -DBLACKBONE_INCLUDE_DIR="$includeDir" `
+              -DBLACKBONE_LIBRARY="$($lib.FullName)" `
+              -DVCPKG_OVERLAY_TRIPLETS="$overlayDir"
+            cmake --build $opBuildDir --config Release --target INSTALL
+          }
+
+      - name: Package artifacts
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if (Test-Path "bin\x86") {
+            Compress-Archive -Path "bin\x86\*" -DestinationPath "op-$tag-x86.zip" -Force
+          }
+          if (Test-Path "bin\x64") {
+            Compress-Archive -Path "bin\x64\*" -DestinationPath "op-$tag-x64.zip" -Force
+          }
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: op-${{ github.ref_name }}
+          path: |
+            op-${{ github.ref_name }}-x86.zip
+            op-${{ github.ref_name }}-x64.zip
