@@ -1,1 +1,0 @@
-swig -python -c++ -module easyop -o easyop_wrap.cxx op.i

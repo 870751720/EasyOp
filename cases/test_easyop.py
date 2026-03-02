@@ -10,7 +10,7 @@ def _ensure_paths():
     if cases_dir not in sys.path:
         sys.path.insert(0, cases_dir)
 
-    # 让 Python 能找到 easyop.pyd 以及其依赖的 DLL
+    # 让 Python 能找到 _easyop.pyd 以及其依赖的 DLL
     if hasattr(os, "add_dll_directory"):
         os.add_dll_directory(dist_release_dir)
     else:

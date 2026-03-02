@@ -23,7 +23,7 @@ message(STATUS "${PYTHON_HOME}\\libs")
 target_link_directories(easyop PUBLIC "${PYTHON_HOME}\\libs")
 #find_library(OP_LIB op ../bin/Release NO_DEFAULT_PATH)
 set_target_properties(easyop PROPERTIES PREFIX "")
-set_target_properties(easyop PROPERTIES OUTPUT_NAME "easyop")
+set_target_properties(easyop PROPERTIES OUTPUT_NAME "_easyop")
 set_target_properties(easyop PROPERTIES SUFFIX ".pyd")
 
 

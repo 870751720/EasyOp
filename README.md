@@ -52,3 +52,13 @@ python路径是你本地安装的路径
   ```powershell
   python build.py --python64-root "C:\Users\Gavin\AppData\Local\Programs\Python\Python311"
   ```
+
+### SWIG说明
+
+#### 下载 SWIG
+- 下载地址：https://sourceforge.net/projects/swig/files/swigwin/
+- 选择最新版下载解压后你会得到类似 `D:\swigwin-4.4.1\swig.exe` 的可执行文件
+
+#### 生成命令
+
+swig -python -c++ -outdir ..\cases easyop.i
