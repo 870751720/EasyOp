@@ -1,4 +1,4 @@
-﻿// OpInterface.cpp: OpInterface 的实现
+// OpInterface.cpp: OpInterface 的实现
 
 #include "libop.h"
 #include <tchar.h>
@@ -123,7 +123,8 @@ void libop::SetPath(const wchar_t *path, long *ret) {
         else
             fpath = m_context->curr_path + fpath;
         if (::PathFileExistsW(fpath.data())) {
-            m_context->curr_path = path;
+            // 使用解析后的实际路径，避免 curr_path 与检查用路径不一致
+            m_context->curr_path = fpath;
             m_context->image_proc._curr_path = m_context->curr_path;
             m_context->bkproc._curr_path = m_context->curr_path;
             *ret = 1;
@@ -165,9 +166,15 @@ void libop::InjectDll(const wchar_t *process_name, const wchar_t *dll_name, long
     auto dll = _ws2string(dll_name);
     long hwnd;
     FindWindowByProcess(process_name, L"", L"", &hwnd);
-    long pid;
-    GetWindowProcessId(hwnd, &pid);
+    long pid = 0;
+    if (hwnd) {
+        GetWindowProcessId(hwnd, &pid);
+    }
     *ret = 0;
+    if (pid == 0) {
+        setlog("InjectDll failed: cannot get process id");
+        return;
+    }
     if (Injecter::EnablePrivilege(TRUE)) {
         long error_code = 0;
         *ret = Injecter::InjectDll(pid, dll_name, error_code);
@@ -877,7 +884,9 @@ void libop::FindColorBlockEx(long x1, long y1, long x2, long y2, const wchar_t *
 
 // 获取(x,y)的颜色
 void libop::GetColor(long x, long y, std::wstring &ret) {
-    color_t cr;
+    // 默认返回空字符串，避免在失败路径上使用未初始化数据
+    ret.clear();
+    color_t cr{};
     auto tx = x + small_block_size, ty = y + small_block_size;
     if (m_context->bkproc.check_bind() && m_context->bkproc.RectConvert(x, y, tx, ty)) {
         if (m_context->bkproc.requestCapture(x, y, small_block_size, small_block_size, m_context->image_proc._src)) {
@@ -885,9 +894,11 @@ void libop::GetColor(long x, long y, std::wstring &ret) {
             cr = m_context->image_proc._src.at<color_t>(0, 0);
         } else {
             setlog("error requestCapture");
+            return;
         }
     } else {
         // setlog("")
+        return;
     }
 
     ret = cr.towstr();
@@ -1113,8 +1124,9 @@ void libop::FetchWord(long x1, long y1, long x2, long y2, const wchar_t *color, 
             m_context->image_proc.set_offset(x1, y1);
             rect_t rc;
             rc.x1 = rc.y1 = 0;
-            rc.x2 = x2;
-            rc.y2 = y2;
+            // 这里 rc 应该使用相对于截取区域的坐标范围，而不是屏幕绝对坐标
+            rc.x2 = x2 - x1;
+            rc.y2 = y2 - y1;
             str = m_context->image_proc.FetchWord(rc, color, word);
         }
     }
