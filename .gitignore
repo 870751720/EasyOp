@@ -12,9 +12,6 @@
 *.zip
 CMakeSettings.json
 # Build results
-[Dd]ebug/
-[Dd]ebugPublic/
-[Rr]eleases/
 Build
 /lib
 bin/
