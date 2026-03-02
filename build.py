@@ -398,12 +398,12 @@ examples:
     parser.add_argument(
         "--python64-root",
         default=None,
-        help="Path to 64-bit Python installation root (expects include/Python.h and libs/python310.lib)",
+        help="Path to 64-bit Python installation root (expects include/Python.h and a python3X.lib in libs/)",
     )
     parser.add_argument(
         "--python32-root",
         default=None,
-        help="Path to 32-bit Python installation root (expects include/Python.h and libs/python310.lib)",
+        help="Path to 32-bit Python installation root (expects include/Python.h and a python3X.lib in libs/)",
     )
     args = parser.parse_args()
 

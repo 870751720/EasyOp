@@ -27,7 +27,18 @@ set_target_properties(pyop PROPERTIES SUFFIX ".pyd")
 
 
 target_link_libraries(pyop ${op_com})
-target_link_libraries(pyop python310)
+
+# 自动从指定 Python 根目录下的 libs 目录寻找合适的 python3X.lib
+file(GLOB PYTHON_LIB_CANDIDATES "${PYTHON_HOME}/libs/python3*.lib")
+if(NOT PYTHON_LIB_CANDIDATES)
+  message(FATAL_ERROR "No python3*.lib found under ${PYTHON_HOME}/libs. Please check your --python*_root path.")
+endif()
+
+list(SORT PYTHON_LIB_CANDIDATES)
+list(REVERSE PYTHON_LIB_CANDIDATES)
+list(GET PYTHON_LIB_CANDIDATES 0 PYTHON_LIB_SELECTED)
+message(STATUS "Using Python library: ${PYTHON_LIB_SELECTED}")
+target_link_libraries(pyop "${PYTHON_LIB_SELECTED}")
 
 IF(CMAKE_SIZEOF_VOID_P EQUAL 8)
   install(TARGETS pyop RUNTIME DESTINATION "${PROJECT_SOURCE_DIR}/bin/x64")

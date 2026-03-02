@@ -42,7 +42,7 @@ python路径是你本地安装的路径
   在命令行使用 `--vcpkg-root` 传入路径，例如：
 
   ```powershell
-  python build.py --vcpkg-root "C:\vcpkg" --python64-root "C:\Users\Gavin\AppData\Local\Programs\Python\Python310"
+  python build.py --vcpkg-root "C:\vcpkg" --python64-root "C:\Users\Gavin\AppData\Local\Programs\Python\Python311"
   ```
 
 - **未安装 vcpkg 的情况**
@@ -50,5 +50,5 @@ python路径是你本地安装的路径
   如果你本机没有装 vcpkg，可以直接在项目根目录运行：
 
   ```powershell
-  python build.py --python64-root "C:\Users\Gavin\AppData\Local\Programs\Python\Python310"
+  python build.py --python64-root "C:\Users\Gavin\AppData\Local\Programs\Python\Python311"
   ```
