@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.10)
+cmake_minimum_required (VERSION 3.20)
 
 set(BLACKBONE_ROOT "$ENV{BLACKBONE_ROOT}" CACHE PATH "Path to BlackBone repository root")
 set(BLACKBONE_INCLUDE_DIR "" CACHE PATH "Path to BlackBone include root (contains BlackBone/Process/Process.h)")
