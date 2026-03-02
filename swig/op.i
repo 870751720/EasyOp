@@ -1,5 +1,5 @@
 #define OP_API
-%module pyop
+%module easyop
 
 %{
     #define OP_API
