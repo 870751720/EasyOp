@@ -13,7 +13,7 @@
 #include <ddraw.h>
 #include <exception>
 
-#include "../../../3rd_party/include/kiero.h"
+#include "kiero.h"
 #include "../../core/globalVar.h"
 #include "../../core/helpfunc.h"
 #include "../../core/opEnv.h"

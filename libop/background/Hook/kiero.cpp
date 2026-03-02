@@ -1,9 +1,8 @@
-
-#include "../include/kiero.h"
+#include "kiero.h"
 #include <Windows.h>
 
 #ifdef KIERO_USE_MINHOOK
-#include "../include/minhook.h"
+#include <MinHook.h>
 #endif
 // #include <MinHook.h>
 //  Uncomment a needed graphical library (you can include all)
@@ -802,3 +801,4 @@ int kiero::unbind() {
     }
     return ret;
 }
+

@@ -1,10 +1,10 @@
-﻿// EasyCom.cpp : 定义 DLL 的导出函数。
+// EasyCom.cpp : 定义 DLL 的导出函数。
 //
 #include "EasyCom.h"
 #include "framework.h"
 
 #include "../libop/com/op_i.h"
-#include "MinHook.h"
+#include <MinHook.h>
 #include <comdef.h>
 #include <fstream>
 #include <iostream>

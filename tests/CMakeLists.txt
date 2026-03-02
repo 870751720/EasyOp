@@ -38,7 +38,6 @@ set(SRC_FILES "main.cpp" "../libop/com/op_i.c")
 
 include_directories( 
   ./
-  ../libop/3rd_party/include/3rd_party
 ) 
 
 add_executable(op_test ${SRC_FILES})

@@ -71,7 +71,7 @@ SET(SRC_FILES
 "./winapi/memoryEx.cpp"
 "./winapi/query_api.cpp"
 "./winapi/winapi.cpp"
-"../3rd_party/src/kiero.cpp"
+"./background/Hook/kiero.cpp"
 "libop.cpp"
 )
 
@@ -165,6 +165,13 @@ if (DEFINED ENV{VCPKG_ROOT})
   set(OP_MINHOOK_LIB_DEBUG "${OP_VCPKG_ROOT}/installed/${OP_MINHOOK_STATIC_TRIPLET}/debug/lib/${OP_MINHOOK_LIB_DEBUG_NAME}")
 
   if (EXISTS "${OP_MINHOOK_LIB_RELEASE}")
+    # 让 libop / op_x64 在编译时能找到 vcpkg 安装的 MinHook 头文件。
+    set(OP_MINHOOK_INCLUDE "${OP_VCPKG_ROOT}/installed/${OP_MINHOOK_STATIC_TRIPLET}/include")
+    if (EXISTS "${OP_MINHOOK_INCLUDE}/MinHook.h")
+      target_include_directories(libop PRIVATE "${OP_MINHOOK_INCLUDE}")
+      target_include_directories(${op_com} PRIVATE "${OP_MINHOOK_INCLUDE}")
+    endif()
+
     if (EXISTS "${OP_MINHOOK_LIB_DEBUG}")
       TARGET_LINK_LIBRARIES(${op_com} optimized "${OP_MINHOOK_LIB_RELEASE}" debug "${OP_MINHOOK_LIB_DEBUG}")
     else()

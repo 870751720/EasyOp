@@ -8,7 +8,7 @@
  /* File created by MIDL compiler version 8.01.0628 */
 /* at Tue Jan 19 11:14:07 2038
  */
-/* Compiler settings for C:/Users/Gavin/Downloads/op-master/libop/com/op.idl:
+/* Compiler settings for D:/EasyOp/libop/com/op.idl:
     Oicf, W1, Zp8, env=Win32 (32b run), target_arch=X86 8.01.0628 
     protocol : dce , ms_ext, c_ext, robust
     error checks: allocation ref bounds_check enum stub_data 

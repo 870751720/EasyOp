@@ -3,7 +3,7 @@
 #include "../../core/helpfunc.h"
 #include "../../core/opEnv.h"
 #include "../../winapi/query_api.h"
-#include "MinHook.h"
+#include <MinHook.h>
 #include "opMessage.h"
 
 #include "dinput.h"

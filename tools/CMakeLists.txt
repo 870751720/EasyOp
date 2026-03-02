@@ -35,6 +35,12 @@ if (DEFINED ENV{VCPKG_ROOT})
   set(OP_TOOLS_MINHOOK_LIB_DEBUG "${OP_VCPKG_ROOT}/installed/${OP_TOOLS_MINHOOK_STATIC_TRIPLET}/debug/lib/${OP_TOOLS_MINHOOK_LIB_DEBUG_NAME}")
 
   if (EXISTS "${OP_TOOLS_MINHOOK_LIB_RELEASE}")
+    # 让 tools 在编译时能找到 vcpkg 安装的 MinHook 头文件。
+    set(OP_TOOLS_MINHOOK_INCLUDE "${OP_VCPKG_ROOT}/installed/${OP_TOOLS_MINHOOK_STATIC_TRIPLET}/include")
+    if (EXISTS "${OP_TOOLS_MINHOOK_INCLUDE}/MinHook.h")
+      target_include_directories(tools PRIVATE "${OP_TOOLS_MINHOOK_INCLUDE}")
+    endif()
+
     if (EXISTS "${OP_TOOLS_MINHOOK_LIB_DEBUG}")
       TARGET_LINK_LIBRARIES(tools optimized "${OP_TOOLS_MINHOOK_LIB_RELEASE}" debug "${OP_TOOLS_MINHOOK_LIB_DEBUG}")
     else()

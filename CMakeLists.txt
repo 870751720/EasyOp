@@ -145,8 +145,6 @@ message(STATUS "BlackBone library: ${BLACKBONE_LIBRARY}")
 
 include_directories( 
   ./
-  ${CMAKE_SOURCE_DIR}/3rd_party/include/
-  ${CMAKE_SOURCE_DIR}/3rd_party/include/3rd_party
   ${BLACKBONE_INCLUDE_DIR}
   ${BLACKBONE_INCLUDE_DIR}/3rd_party
 ) 

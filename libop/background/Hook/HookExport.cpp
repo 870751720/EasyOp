@@ -2,7 +2,7 @@
 #include "../../core/opEnv.h"
 #include "DisplayHook.h"
 #include "InputHook.h"
-#include "../../../3rd_party/include/kiero.h"
+#include "kiero.h"
 int refCount = 0;
 
 static int to_kiero_render_type(int render_type_) {
