@@ -2945,16 +2945,16 @@ static swig_module_info swig_module = {swig_types, 7, 0, 0, 0, 0};
 #define SWIG_TypeQuery SWIG_Python_TypeQuery
 
 /*-----------------------------------------------
-              @(target):= _pyop.so
+              @(target):= easyop.pyd
   ------------------------------------------------*/
 #if PY_VERSION_HEX >= 0x03000000
-#define SWIG_init PyInit__pyop
+#define SWIG_init PyInit_easyop
 
 #else
-#define SWIG_init init_pyop
+#define SWIG_init init_easyop
 
 #endif
-#define SWIG_name "_pyop"
+#define SWIG_name "easyop"
 
 #ifdef __cplusplus
 #include <utility>

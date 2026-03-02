@@ -22,7 +22,9 @@ target_include_directories(pyop PUBLIC
 message(STATUS "${PYTHON_HOME}\\libs")
 target_link_directories(pyop PUBLIC "${PYTHON_HOME}\\libs")
 #find_library(OP_LIB op ../bin/Release NO_DEFAULT_PATH)
-set_target_properties(pyop PROPERTIES PREFIX "_")
+# 生成 easyop.pyd（模块名 easyop，无前导下划线）
+set_target_properties(pyop PROPERTIES PREFIX "")
+set_target_properties(pyop PROPERTIES OUTPUT_NAME "easyop")
 set_target_properties(pyop PROPERTIES SUFFIX ".pyd")
 
 
