@@ -2,25 +2,28 @@ import os
 import sys
 
 
-def _ensure_paths():
-    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    cases_dir = os.path.join(base_dir, "cases")
-    dist_release_dir = os.path.join(base_dir, "dist", "Release")
+def _ensure_paths() -> str:
+    """
+    确保当前目录可直接导入 easyop，并让 DLL/扩展模块从同目录解析依赖。
 
-    if cases_dir not in sys.path:
-        sys.path.insert(0, cases_dir)
+    约定：所有依赖（easyop.py、_easyop.pyd 及其 DLL）都在本文件同目录下，
+    不额外添加任何其它搜索路径。
+    """
+    base_dir = os.path.dirname(os.path.abspath(__file__))
 
-    # 让 Python 能找到 _easyop.pyd 以及其依赖的 DLL
-    if hasattr(os, "add_dll_directory"):
-        os.add_dll_directory(dist_release_dir)
-    else:
-        os.environ["PATH"] = dist_release_dir + os.pathsep + os.environ.get("PATH", "")
+    # 让 `from easyop import ...` 优先命中当前目录下的 easyop.py
+    if base_dir not in sys.path:
+        sys.path.insert(0, base_dir)
 
-    # 同时把 dist/Release 放到 sys.path，方便直接 import easyop
-    if dist_release_dir not in sys.path:
-        sys.path.insert(0, dist_release_dir)
+    # 让相对路径与“同目录 DLL”行为更稳定（不引入其它目录）
+    try:
+        os.chdir(base_dir)
+    except OSError:
+        pass
 
     return base_dir
+
+
 
 
 def main():
@@ -60,8 +63,15 @@ def main():
 
     # 4. 鼠标位置和取色（不依赖绑定窗口，最容易测试）
     try:
-        x, y = op.GetCursorPos()
-        print("GetCursorPos():", (x, y))
+        pos = op.GetCursorPos()
+        # SWIG 包装的 GetCursorPos 通常会返回 3 个值（例如 x, y, ret/状态）
+        if isinstance(pos, (tuple, list)):
+            if len(pos) < 2:
+                raise ValueError(f"GetCursorPos() 返回值长度异常: {pos!r}")
+            x, y = int(pos[0]), int(pos[1])
+        else:
+            raise TypeError(f"GetCursorPos() 返回类型异常: {type(pos)!r}, 值: {pos!r}")
+        print("GetCursorPos():", pos)
         color = op.GetColor(x, y)
         print(f"GetColor({x}, {y}):", color)
     except Exception as e:
