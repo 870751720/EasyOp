@@ -341,6 +341,40 @@ def bootstrap_dependencies(
     return vcpkg_root, blackbone_root, blackbone_libs
 
 
+def collect_build_dlls(project_dir: Path, build_dir: Path, build_type: str) -> None:
+    """Collect built DLLs / SWIG Python modules into project_root/dist/<BuildType>."""
+    dist_dir = project_dir / "dist" / build_type
+    dist_dir.mkdir(parents=True, exist_ok=True)
+
+    # Clear existing native binaries in target dist directory
+    for existing in list(dist_dir.glob("*.dll")) + list(dist_dir.glob("*.pyd")):
+        try:
+            existing.unlink()
+        except OSError:
+            pass
+
+    copied_dlls = 0
+    copied_pyds = 0
+
+    for dll in build_dir.rglob("*.dll"):
+        target = dist_dir / dll.name
+        try:
+            shutil.copy2(dll, target)
+            copied_dlls += 1
+        except OSError:
+            print(f"[WARN] Failed to copy DLL: {dll} -> {target}")
+
+    for pyd in build_dir.rglob("*.pyd"):
+        target = dist_dir / pyd.name
+        try:
+            shutil.copy2(pyd, target)
+            copied_pyds += 1
+        except OSError:
+            print(f"[WARN] Failed to copy PYD: {pyd} -> {target}")
+
+    print(f"[INFO] Collected {copied_dlls} DLL(s) and {copied_pyds} PYD(s) into: {dist_dir}")
+
+
 # ── Main ───────────────────────────────────────────────────────────
 
 def main():
@@ -509,6 +543,9 @@ examples:
     # ── CMake build ──
     print("\n[INFO] Building...")
     run(["cmake", "--build", str(build_dir), "--config", build_type], env=env)
+
+    # ── Collect DLLs into dist/<BuildType> ──
+    collect_build_dlls(project_dir, build_dir, build_type)
 
     print(f"\n{'=' * 60}")
     print(f"  Build completed: {build_type} | {generator} | {arch}")
