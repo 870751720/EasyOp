@@ -1,6 +1,6 @@
 # OP - Windows 自动化插件
 
-[![GitHub Release](https://img.shields.io/github/v/release/WallBreaker2/op?style=flat-square)](https://github.com/WallBreaker2/op/releases)
+[[GitHub]](https://github.com/WallBreaker2/op)
 
 ### 使用 `build.py` 构建项目
 

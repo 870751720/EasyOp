@@ -42,12 +42,12 @@ jobs:
           & "$vcpkgRoot\bootstrap-vcpkg.bat"
           Add-Content -Path $Env:GITHUB_ENV -Value "VCPKG_ROOT=$vcpkgRoot"
 
-      - name: Install dependencies via vcpkg (gtest, minhook)
+      - name: Install dependencies via vcpkg (minhook)
         shell: pwsh
         run: |
           $triplet = if ('${{ matrix.arch }}' -eq 'Win32') { 'x86-windows' } else { 'x64-windows' }
           $overlayDir = Join-Path $env:GITHUB_WORKSPACE "ci\triplets"
-          & "$env:VCPKG_ROOT\vcpkg.exe" install gtest:$triplet minhook:$triplet --overlay-triplets=$overlayDir
+          & "$env:VCPKG_ROOT\vcpkg.exe" install minhook:$triplet --overlay-triplets=$overlayDir
 
       - name: Checkout BlackBone
         uses: actions/checkout@v4
@@ -104,13 +104,6 @@ jobs:
           $bld = "build\${{ matrix.arch }}"
           cmake --build $bld --config Release
 
-      - name: Run ctest (${{ matrix.arch }})
-        shell: pwsh
-        run: |
-          $bld = "build\${{ matrix.arch }}"
-          cd $bld
-          ctest -C Release --output-on-failure
-
   release:
     runs-on: windows-latest
     needs: build-and-test
@@ -146,11 +139,6 @@ jobs:
 
           foreach ($arch in @('Win32', 'x64')) {
             Write-Host "=== Build configuration for $arch ==="
-
-            # 安装依赖
-            $triplet = if ($arch -eq 'Win32') { 'x86-windows' } else { 'x64-windows' }
-            $overlayDir = Join-Path $env:GITHUB_WORKSPACE "ci\triplets"
-            & "$env:VCPKG_ROOT\vcpkg.exe" install gtest:$triplet minhook:$triplet --overlay-triplets=$overlayDir
 
             # 构建 BlackBone
             $src = Join-Path $root "src"

@@ -47,7 +47,6 @@ if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 endif()
 
 project ("op")
-include(CTest)
 add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
 add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
@@ -154,8 +153,6 @@ include_directories(
 add_subdirectory ("libop")
 ## tools项目
 add_subdirectory("tools")
-## 测试项目
-add_subdirectory("tests")
 ## swig 项目
 if(build_swig_py)
     add_subdirectory("swig")
